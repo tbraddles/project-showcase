@@ -14,7 +14,7 @@ The Brownlow Medal is awarded to the best and fairest AFL player each season, wi
 - **Evaluation**: Model outputs were validated against historical voting patterns.
 - **Output**: Final predictions for the 2025 Brownlow Medal winner are provided in Excel format.
 
-## Files Included
+## Sample Files Included (Note not all files included)
 
 - `brownlow_scraper_games.py`: Script used to collect and clean match data.
 - `brownlow_model.py`: Main model training and evaluation script.
