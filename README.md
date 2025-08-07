@@ -1,5 +1,4 @@
-# project-showcase
-Project Showcase for Internship Applications
+# Project Showcase for Internship Applications
 
 Hi, I'm Tyler Bradley — a former quantitative trader now pivoting into software engineering.
 
