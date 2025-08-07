@@ -16,7 +16,7 @@ The Brownlow Medal is awarded to the best and fairest AFL player each season, wi
 
 ## Files Included
 
-- `brownlow_scraper.py`: Script used to collect and clean match and player data.
+- `brownlow_scraper_games.py`: Script used to collect and clean match data.
 - `brownlow_model.py`: Main model training and evaluation script.
 - `brownlow_predictions.xlsx`: Final 2025 predictions exported to Excel, broadly aligned with current betting markets.
 
