@@ -19,7 +19,12 @@ The goal of Project Texas is to build a flexible and extensible poker engine tha
 
 ## Files Included
 
-- `texas_simulator.py`: Core simulation file containing object-oriented implementation of the game loop and player interactions.
+- `main.py`: Main entry point that orchestrates the gameplay loop — from setup and dealing to betting rounds, showdown, and pot allocation.
+- `player.py`: Contains the Player class with attributes and methods for tracking hand state, stack, and in-hand status.
+- `deck.py`: Functions for building and managing a deck of cards, including shuffling and dealing to players or the community.
+- `betting.py`: Handles betting logic, blind assignment, pot management, and progression through betting rounds.
+- `evaluation.py`: Evaluates hands at showdown and checks for early wins if only one player remains in-hand.
+- `ui.py`: Contains simple print functions to display game state, community cards, and board updates during gameplay.
 
 ## Skills Demonstrated
 
