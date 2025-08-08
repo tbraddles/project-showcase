@@ -9,17 +9,35 @@ import sqlite3
 from pathlib import Path
 from datetime import datetime
 
-# Setup - Gloucester Park - July 25 to July 26
-DB_PATH = Path(r"C:\Users\tyler\Documents\CodingProjects\PuntBot\Database\race_results.db")
-filename = r"C:\Users\tyler\Documents\CodingProjects\PuntBot\Database\scraped_results.csv"
-start = "2025-07-25"
-end = "2025-07-26"
-base_url = "https://www.harness.org.au/racing/fields/race-fields/?mc=GP"
-
 def extract_race_table_data(table):
     """
-    Extracts all individual horse details for a given race. 
-    # Note this can handle races yet to occur but the data collected will not be in the same form as historical data
+    Extracts structured data for all runners in a single race from a race HTML table element.
+
+    This function handles both historical races (with complete data) and upcoming races 
+    (which may have missing or placeholder values). It parses key information such as 
+    finishing position, horse name, prize money, barrier position, trainer/driver details, 
+    margins, odds, and stewards' comments.
+
+    Args:
+        table: A table element containing race data.
+
+    Returns:
+        list[dict]: A list of dictionaries, each representing a runner with the following fields:
+            - place (int): Finishing position.
+            - horse_name (str): Name of the horse.
+            - prize_money (int | None): Prize money earned, cleaned to an integer.
+            - row_and_barrier (str): Starting row and barrier information.
+            - tab_number (int): TAB number of the horse.
+            - trainer (str): Trainers name.
+            - driver (str): Drivers name.
+            - margin (float | None): Margin behind the winner, in lengths.
+            - starting_odds (float | None): Starting price odds.
+            - stewards_comments (str): Commentary or remarks from race stewards.
+            - post_race (bool): Flag indicating that this represents post-race data.
+    
+    Notes:
+        - Races that have not yet run may return partial or inconsistent data.
+        - Prints diagnostic information to help debug data inconsistencies.
     """
     html = table.inner_html()
     soup = BeautifulSoup(html, "html.parser")
@@ -116,7 +134,36 @@ def extract_race_table_data(table):
 
 def extract_race_times_only(table_html, i, date):
     """
-    Extracts all race details for a given race day. 
+    Extracts and standardizes time-related metrics and metadata for a specific race from a race day table.
+
+    Parses the race time splits (quarters, gross time, mile rate, lead time), track rating, and margins 
+    between top finishers from the provided HTML table content. All time fields are converted to numeric 
+    values (in seconds or float), and field names are normalized for consistency.
+
+    Args:
+        table_html (str): Raw HTML string of the race table (typically contains time-related info).
+        i (int): The race number identifier on the card.
+        date (str): The race date in "DDMMYY" format.
+
+    Returns:
+        dict: A dictionary with the following standardized fields:
+            - date (datetime): Parsed date of the race.
+            - race (int): Race number identifier.
+            - track_rating (str): Track rating (e.g. "GOOD").
+            - gross_time (float): Gross time of the race in seconds.
+            - mile_rate (float): Mile rate of the race in seconds.
+            - lead_time (float): Lead time in seconds.
+            - first_quarter (float): Time for the first quarter (in seconds).
+            - second_quarter (float): Time for the second quarter (in seconds).
+            - third_quarter (float): Time for the third quarter (in seconds).
+            - fourth_quarter (float): Time for the fourth quarter (in seconds).
+            - margin_second (float | None): Margin from first to second place in lengths.
+            - margin_third (float | None): Margin from second to third place in lengths.
+
+    Notes:
+        - Margins like "HD", "NK", or "NS" are mapped to fractional lengths.
+        - Unexpected or missing margin formats are returned as `None`.
+        - Assumes that the table contains all relevant rows with "key: value" formatted cells.
     """
     soup = BeautifulSoup(table_html, "html.parser")
     rows = soup.find_all("tr")
@@ -193,7 +240,19 @@ def extract_race_times_only(table_html, i, date):
 
 def generate_urls(start_date, end_date, base_url):
     """
-    Generates a url list to examine.
+    Generates a list of URLs based on a date range and base URL pattern.
+
+    Each URL corresponds to a specific date within the range, formatted as "DDMMYY",
+    and appended to the provided base URL. Useful for scraping or querying time-series
+    data from date-specific web pages.
+
+    Args:
+        start_date (datetime): The start date (inclusive).
+        end_date (datetime): The end date (inclusive).
+        base_url (str): The base URL string to which the date will be appended.
+
+    Returns:
+        list[str]: A list of fully formed URLs covering the specified date range.
     """
     current = start_date
     urls = []
@@ -206,7 +265,29 @@ def generate_urls(start_date, end_date, base_url):
 
 def scrape_race_data_from_html(page, main_url):
     """
-    Scrapes all horse and race data for a given url. 
+    Scrapes all horse-level and race-level data from a race day page on the target website.
+
+    For each race:
+        - Horse-level data (e.g., horse name, position, trainer) is extracted from tables containing 
+          specific HTML patterns (like 'class="horse_name"').
+        - Race-level data (e.g., times, margins, track rating) is extracted from tables with the 
+          class "raceTimes".
+
+    The extracted data is standardized with consistent date and track information to allow for downstream
+    storage or analysis.
+
+    Args:
+        page (playwright.sync_api.Page): The Playwright page object for browser interaction.
+        main_url (str): The URL of the race day page to scrape.
+
+    Returns:
+        tuple[list[dict], list[dict]]: 
+            - A list of lists, where each inner list contains horse-level result dictionaries for one race.
+            - A list of race-level result dictionaries containing time, margin, and metadata per race.
+
+    Notes:
+        - If the page fails to load, returns `(None, None)`.
+        - Assumes race date and track code can be derived from the last 8 characters of the `main_url`.
     """
     print(f"🌐 Opening main page: {main_url}")
     
@@ -286,10 +367,65 @@ def scrape_race_data_from_html(page, main_url):
 
     return all_race_results, all_race_times
 
+def scrape_multiple_race_days(urls):
+    """
+    Scrapes horse and race data from multiple URLs using Playwright.
+
+    Launches a Chromium browser and iterates through the list of URLs,
+    scraping horse results and race times from each page using the `scrape_race_data_from_html` function.
+
+    Args:
+        urls (list of str): List of URLs to scrape.
+
+    Returns:
+        tuple: Two lists:
+            - master_horse_results: List of all horse result dictionaries from all URLs.
+            - master_race_times: List of all race time dictionaries from all URLs.
+    """
+    master_horse_results = []
+    master_race_times = []
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        context = browser.new_context()
+        page = context.new_page()
+
+        for url in urls:
+            horse_results, race_times = scrape_race_data_from_html(page, url)
+
+            # Only appending horse results that exist
+            if horse_results:
+                for race in horse_results:
+                    master_horse_results.extend(race)
+
+            # Only appending race results that exist
+            if race_times:
+                master_race_times.extend(race_times)
+
+        browser.close()
+
+    return master_horse_results, master_race_times
+
 # --------------------------------------------------
 # SQL Helper Functions
 
-def init_db(db_path=DB_PATH):
+def init_db(db_path):
+    """
+    Initializes the SQLite database and creates the required tables if they do not exist.
+    - `races`: Stores metadata for each race, including date, track, timing splits, and margins.
+    - `horse_results`: Stores individual horse results for each race, including finishing position,
+      odds, margins, and stewards’ comments.
+
+    Both tables use appropriate constraints to enforce data integrity, including:
+      - A unique constraint on (date, race_number, track) in `races`.
+      - A foreign key relationship between `horse_results.race_id` and `races.race_id`.
+
+    Args:
+        db_path (str): Path to the SQLite database file.
+
+    Returns:
+        sqlite3.Connection: A live connection object to the initialized database.
+    """
     con = sqlite3.connect(db_path)
     con.execute("PRAGMA journal_mode=WAL;")
     con.execute("PRAGMA foreign_keys=ON;")
@@ -341,6 +477,19 @@ def init_db(db_path=DB_PATH):
     return con
 
 def upsert_race(con, race_time):
+    """
+    Inserts or updates a race entry in the 'races' table.
+
+    If a race already exists with the same (date, race_number, track) combination,
+    this function updates its timing and margin details. Otherwise, it inserts a new race.
+
+    Args:
+        con (sqlite3.Connection): Active connection to the SQLite database.
+        race_time (dict): Dictionary containing race metadata.
+
+    Returns:
+        int: The `race_id` of the inserted or updated race.
+    """
     cur = con.cursor()
     date = race_time["date"]
     race_number = race_time["race"]
@@ -383,6 +532,20 @@ def upsert_race(con, race_time):
     return cur.fetchone()[0]
 
 def upsert_horse_result(con, horse, race_id):
+    """
+    Inserts or updates a horse result in the database.
+
+    If the result already exists (based on race_id, horse_name, date, and track),
+    it will be updated with the latest data. Otherwise, a new entry is inserted.
+
+    Args:
+        con (sqlite3.Connection): SQLite database connection.
+        horse (dict): Dictionary of horse result data.
+        race_id (int): Foreign key referencing the associated race.
+
+    Returns:
+        None
+    """
     cur = con.cursor()
     cur.execute("""
         INSERT INTO horse_results (
@@ -421,14 +584,25 @@ def upsert_horse_result(con, horse, race_id):
     ))
     con.commit()
 
-# --------------------------------------------------
-# After scraping, ingest into SQLite:
-# master_race_times: list of race-time dicts
-# master_horse_results: list of races (each is list of horse dicts), 
-#                       each horse dict must have 'date' and 'race' fields
+def ingest_to_sqlite(db_path, master_horse_results, master_race_times):
+    """
+    Ingests race and horse result data into a SQLite database.
 
-def ingest_to_sqlite(master_race_times, master_horse_results):
-    con = init_db()
+    This function initialises the database (creating tables if they do not exist),
+    then inserts or updates race-level and horse-level data. Races are inserted first,
+    and each horse result is linked to its corresponding race via a foreign key.
+
+    Args:
+        db_path (str): Path to the SQLite database file.
+        master_horse_results (list[dict]): A list of dictionaries containing horse-level data.
+            Each dictionary must include a 'date' and 'race' (number) to match with races.
+        master_race_times (list[dict]): A list of dictionaries containing race-level data.
+            Each dictionary must include a 'date' and 'race' (number).
+
+    Returns:
+        sqlite3.Connection: An open SQLite connection for further querying or closing.
+    """
+    con = init_db(db_path)
     # Build a mapping from (date, race) -> race_id
     race_id_map = {}
     for rt in master_race_times:
@@ -453,32 +627,20 @@ def ingest_to_sqlite(master_race_times, master_horse_results):
 
     return con  # return connection if further queries needed
 
+if __name__ == "__main__":
+    # Setup - Gloucester Park - July 25 to July 26
+    db_path = Path(r"C:\Users\tyler\Documents\CodingProjects\PuntBot\Database\race_results.db")
+    start = "2025-07-25"
+    end = "2025-07-26"
+    base_url = "https://www.harness.org.au/racing/fields/race-fields/?mc=GP"
 
-# --------------------------------------------------
-# Running scraping and ingesting into SQL
+    # Generating urls
+    start_date = datetime.strptime(start, "%Y-%m-%d")
+    end_date = datetime.strptime(end, "%Y-%m-%d")
+    urls = generate_urls(start_date, end_date, base_url)
 
-# Generating dates
-start_date = datetime.strptime(start, "%Y-%m-%d")
-end_date = datetime.strptime(end, "%Y-%m-%d")
-urls = generate_urls(start_date, end_date, base_url)
-
-# Scraping each website
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=False)
-    context = browser.new_context()
-    page = context.new_page()
-
-    master_horse_results = []
-    master_race_times = []
-    for url in urls:
-        horse_results, race_times = scrape_race_data_from_html(page, url)
-        # Only appending horse results that exist
-        if horse_results:
-            for race in horse_results:
-                master_horse_results.extend(race)
-          # Only appending horse results that exist
-        if race_times:
-            master_race_times.extend(race_times)      
-    browser.close()
-
-conn = ingest_to_sqlite(master_race_times, master_horse_results)
+    # Scraping each website
+    master_horse_results, master_race_times = scrape_multiple_race_days(urls)
+    
+    # Inserting to database
+    conn = ingest_to_sqlite(master_horse_results, master_race_times)
