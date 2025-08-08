@@ -14,11 +14,20 @@ The Brownlow Medal is awarded to the best and fairest AFL player each season, wi
 - **Evaluation**: Model outputs were validated against historical voting patterns.
 - **Output**: Final predictions for the 2025 Brownlow Medal winner are provided in Excel format.
 
-## Sample Files Included (Note not all files included)
+## Files Included
 
-- `brownlow_scraper_games.py`: Script used to collect and clean match data.
-- `brownlow_model.py`: Main model training and evaluation script.
-- `brownlow_predictions.xlsx`: Final 2025 predictions exported to Excel, broadly aligned with current betting markets.
+- `player_data_scraper.py`: Downloads and cleans per-player stats from AFL Tables across a given season.
+- `game_data_scraper.py`: Collects and standardises game-level scores and metadata.
+- `merge_afl_data.py`: Merges player and game data into a unified dataset with contextual features.
+- `brownlow_predictor.py`: Builds and evaluates the Brownlow prediction model; generates per-match and overall vote predictions.
+- `xgb_tuning_utils.py`: Contains hyperparameter tuning logic using GridSearchCV for optimizing XGBoost performance.
+- `Master_AFL_Data.csv`: Cleaned and combined dataset used for model training and analysis.
+- `Current_Predictions.xlsx`: Formatted output of current Brownlow predictions based on most recent data.
+
+## Directories
+
+- `afl_tables/`: Raw scraped CSVs for player and match data (organized by year).
+- `output/`: Generated prediction outputs, including season vote tallies, match-by-match vote heatmaps, and Excel exports.
 
 ## Skills Demonstrated
 
