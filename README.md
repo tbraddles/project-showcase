@@ -6,7 +6,7 @@ This repository contains selected code samples demonstrating my skills in Python
 
 ## Projects
 - [**Project Brownlow**: Predictive model for the 2025 AFL Brownlow Medalist](./Project_Brownlow/)
-- [**Project PuntBot**: Algorithmic trading simulator for Australian harness racing](./Project_PuntBot/)
 - [**Project Texas**: Texas Hold'em poker simulator](./Project_Texas/)
+- [**Project PuntBot**: Algorithmic trading simulator for Australian harness racing](./Project_PuntBot/)
 
 Check out my professional profile: [LinkedIn](https://www.linkedin.com/in/tylerabradley/).
