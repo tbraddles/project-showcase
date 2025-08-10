@@ -9,6 +9,7 @@ import pandas as pd
 import requests
 import re
 from datetime import datetime
+from pathlib import Path
 
 def download_and_parse_game_data(save_path: str) -> None:
     """
@@ -77,5 +78,5 @@ def download_and_parse_game_data(save_path: str) -> None:
         print(f"Failed to save CSV file: {e}")
 
 if __name__ == "__main__":
-    output_path = r'C:\Users\tyler\Documents\CodingProjects\Brownlow\afl_tables\AFL_Game_Data.csv'
+    output_path = Path(__file__).parent / "afl_tables" / "AFL_Game_Data.csv"
     download_and_parse_game_data(output_path)
