@@ -17,6 +17,7 @@ import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
+from pathlib import Path
 
 # Loading DataFrame
 def load_data(file_path: str) -> pd.DataFrame:
@@ -222,8 +223,10 @@ def predict_and_export(bst, predict_df, feature_cols, output_dir: str):
 
 if __name__ == "__main__":
     # File information
-    filename = "C:/Users/tyler/Documents/CodingProjects/Brownlow/Master_AFL_Data.csv"
-    output_dir = "C:/Users/tyler/Documents/CodingProjects/Brownlow/Output"
+    base_dir = Path(__file__).parent
+    filename = base_dir / "Master_AFL_Data.csv"
+    output_dir = base_dir / "Output"
+
     # Hardcoded total votes for 2023 and 2017 as missing data
     votes_2023 = {
         "Lachie Neale": 31,
@@ -653,4 +656,5 @@ if __name__ == "__main__":
     evaluate_thresholds(probs, y_test, 0.3)
 
     # Predicting and exporting
+
     predict_and_export(bst, predict_df, feature_cols, output_dir)
