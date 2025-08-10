@@ -630,6 +630,7 @@ def ingest_to_sqlite(db_path, master_horse_results, master_race_times):
 if __name__ == "__main__":
     # Setup - Gloucester Park - July 25 to July 26
     db_path = Path(__file__).parent / "Database" / "race_results.db"
+    db_path.parent.mkdir(parents=True, exist_ok=True) # Create the 'Database' folder if it doesn't exist
     start = "2025-07-25"
     end = "2025-07-26"
     base_url = "https://www.harness.org.au/racing/fields/race-fields/?mc=GP"
@@ -643,5 +644,4 @@ if __name__ == "__main__":
     master_horse_results, master_race_times = scrape_multiple_race_days(urls)
     
     # Inserting to database
-    conn = ingest_to_sqlite(master_horse_results, master_race_times)
-
+    conn = ingest_to_sqlite(db_path, master_horse_results, master_race_times)
