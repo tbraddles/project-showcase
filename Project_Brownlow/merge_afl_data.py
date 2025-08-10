@@ -8,7 +8,6 @@ Saves the merged dataset to CSV.
 
 import pandas as pd
 from pathlib import Path
-from pathlib import Path
 
 def merge_afl_data(base_dir: str, player_years: list[int], output_file: str):
     """
@@ -133,3 +132,4 @@ if __name__ == "__main__":
     output_file = "Master_AFL_Data.csv"
     player_years = [2018, 2019, 2020, 2021, 2022, 2024, 2025] # Note 2023 have incomplete data
     merge_afl_data(base_dir, player_years, output_file)
+
