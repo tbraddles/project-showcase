@@ -7,6 +7,7 @@ Downloads AFL player stats for a specified year from AFL Tables and saves them t
 import pandas as pd
 import requests
 import io
+from pathlib import Path
 
 def download_afl_player_data(year: int, save_path: str) -> None:
     """
@@ -30,5 +31,6 @@ def download_afl_player_data(year: int, save_path: str) -> None:
 
 if __name__ == "__main__":
     year = 2025
-    output_path = fr"C:\Users\tyler\Documents\CodingProjects\Brownlow\afl_tables\{year}_AFL_Player_Data.csv"
+    base_dir = Path(__file__).parent
+    output_path = base_dir / "afl_tables" / f"{year}_AFL_Player_Data.csv"
     download_afl_player_data(year, output_path)
