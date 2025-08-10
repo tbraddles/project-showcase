@@ -629,7 +629,7 @@ def ingest_to_sqlite(db_path, master_horse_results, master_race_times):
 
 if __name__ == "__main__":
     # Setup - Gloucester Park - July 25 to July 26
-    db_path = Path(r"C:\Users\tyler\Documents\CodingProjects\PuntBot\Database\race_results.db")
+    db_path = Path(__file__).parent / "Database" / "race_results.db"
     start = "2025-07-25"
     end = "2025-07-26"
     base_url = "https://www.harness.org.au/racing/fields/race-fields/?mc=GP"
@@ -644,3 +644,4 @@ if __name__ == "__main__":
     
     # Inserting to database
     conn = ingest_to_sqlite(master_horse_results, master_race_times)
+
