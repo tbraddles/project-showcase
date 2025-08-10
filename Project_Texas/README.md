@@ -42,7 +42,7 @@ The goal of Project Texas is to build a flexible and extensible poker engine tha
 
 ## Status
 
-🛠️ In progress — core gameplay logic functional; work ongoing on improving realism, edge case handling, and extensibility.
+🛠️ In progress — core idea functional; work ongoing on incorporating full logic, edge case handling, and extensibility.
 
 ---
 
