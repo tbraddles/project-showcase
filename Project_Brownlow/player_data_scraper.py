@@ -33,4 +33,6 @@ if __name__ == "__main__":
     year = 2025
     base_dir = Path(__file__).parent
     output_path = base_dir / "afl_tables" / f"{year}_AFL_Player_Data.csv"
+    output_path.parent.mkdir(parents=True, exist_ok=True) # Create the 'afl_tables' folder if it doesn't exist
     download_afl_player_data(year, output_path)
+
