@@ -78,5 +78,8 @@ def download_and_parse_game_data(save_path: str) -> None:
         print(f"Failed to save CSV file: {e}")
 
 if __name__ == "__main__":
-    output_path = Path(__file__).parent / "afl_tables" / "AFL_Game_Data.csv"
+    base_dir = Path(__file__).parent
+    output_path = base_dir / "afl_tables" / "AFL_Game_Data.csv"
+    output_path.parent.mkdir(parents=True, exist_ok=True) # Create the 'afl_tables' folder if it doesn't exist
     download_and_parse_game_data(output_path)
+
