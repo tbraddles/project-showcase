@@ -226,6 +226,7 @@ if __name__ == "__main__":
     base_dir = Path(__file__).parent
     filename = base_dir / "Master_AFL_Data.csv"
     output_dir = base_dir / "Output"
+    output_dir.mkdir(parents=True, exist_ok=True) # Create the 'output' folder if it doesn't exist
 
     # Hardcoded total votes for 2023 and 2017 as missing data
     votes_2023 = {
@@ -658,3 +659,4 @@ if __name__ == "__main__":
     # Predicting and exporting
 
     predict_and_export(bst, predict_df, feature_cols, output_dir)
+
