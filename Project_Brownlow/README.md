@@ -6,6 +6,53 @@ A machine learning project aimed at predicting the 2025 AFL Brownlow Medal votes
 
 The Brownlow Medal is awarded to the best and fairest AFL player each season, with votes cast after each match. This project attempts to predict vote outcomes using structured historical data and ensemble machine learning methods.
 
+## Usage
+
+**1. Clone the Repository**
+```
+git clone https://github.com/tbraddles/project-showcase.git
+cd project-showcase/Project_Brownlow
+```
+
+**2. Create and Activate a Virtual Environment**
+
+On Windows:
+```
+python -m venv venv
+venv\Scripts\activate
+```
+
+**3. Install Required Dependencies**
+```
+pip install -r requirements.txt
+```
+
+**4. Run the Pipeline Scripts in Order**
+
+4-1. Scrape game-level data:
+```
+python game_data_scraper.py
+```
+
+4-2. Scrape player-level data (set to scrape 2025 data):
+```
+python player_data_scraper.py
+```
+
+4-3. Merge and clean the AFL data:
+```
+python merge_afl_data.py
+```
+
+4-4. Generate Brownlow predictions:
+```
+python brownlow_predictor.py
+```
+
+**5. View Output**
+
+- Navigate to the `output` folder to see the generated prediction files.
+
 ## Key Components
 
 - **Data Collection**: A custom Python scraper to gather match-level data and player statistics.
