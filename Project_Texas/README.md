@@ -6,6 +6,32 @@ A Python-based simulator for Texas Hold’em Poker designed to model gameplay me
 
 The goal of Project Texas is to build a flexible and extensible poker engine that simulates realistic gameplay — from pre-flop through showdown — to support future development of automated strategy agents and statistical analysis.
 
+## Usage
+
+**1. Clone the Repository**
+```
+git clone https://github.com/tbraddles/project-showcase.git
+cd project-showcase/Project_Texas
+```
+
+**2. Create and Activate a Virtual Environment**
+
+On Windows:
+```
+python -m venv venv
+venv\Scripts\activate
+```
+
+**3. Install Required Dependencies**
+```
+pip install -r requirements.txt
+```
+
+**4. Run the Main Script**
+```
+python main.py
+```
+
 ## Key Components
 
 - **Game Engine**:
