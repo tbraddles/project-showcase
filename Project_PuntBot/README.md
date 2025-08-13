@@ -6,6 +6,32 @@ An automated trading bot designed for Australian harness racing markets. This pr
 
 The goal of PuntBot is to simulate and evaluate algorithmic betting strategies on live horse harness racing data. 
 
+## Usage
+
+**1. Clone the Repository**
+```
+git clone https://github.com/tbraddles/project-showcase.git
+cd project-showcase/Project_PuntBot
+```
+
+**2. Create and Activate a Virtual Environment**
+
+On Windows:
+```
+python -m venv venv
+venv\Scripts\activate
+```
+
+**3. Install Required Dependencies**
+```
+pip install -r requirements.txt
+```
+
+**4. Run the script**
+```
+python puntbot_scraper.py
+```
+
 ## Key Components
 
 - **Data Pipeline**: 
