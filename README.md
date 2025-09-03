@@ -1,6 +1,6 @@
-# Project Showcase for Internship Applications
+# Project Showcase
 
-Hi, I'm Tyler Bradley — a former quantitative trader now pivoting into software engineering.
+Hi, I'm Tyler Bradley.
 
 This repository contains selected code samples demonstrating my skills in Python, algorithms, data engineering, and full-stack software design. Each folder includes a short project summary.
 
