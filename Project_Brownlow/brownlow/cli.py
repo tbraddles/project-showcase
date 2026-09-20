@@ -3,6 +3,7 @@
 import argparse
 
 import config
+from brownlow.advanced import scrape_advanced_stats
 from brownlow.merge import merge_afl_data
 from brownlow.predict import run_predict
 from brownlow.scrape import download_afl_player_data, download_and_parse_game_data
@@ -18,6 +19,11 @@ def scrape_players(year: int | None = None) -> None:
     path = config.player_data_path(season)
     path.parent.mkdir(parents=True, exist_ok=True)
     download_afl_player_data(season, path)
+
+
+def scrape_advanced(year: int | None = None, force: bool = False) -> None:
+    seasons = [year] if year is not None else None
+    scrape_advanced_stats(years=seasons, force=force)
 
 
 def merge() -> None:
@@ -47,7 +53,23 @@ def main(argv: list[str] | None = None) -> None:
         help=f"Season to scrape (default: {config.SCRAPE_PLAYER_YEAR})",
     )
 
-    subparsers.add_parser("merge", help="Merge player and game data")
+    advanced_parser = subparsers.add_parser(
+        "scrape-advanced",
+        help="Download metres gained, score involvements, and other Champion-style stats",
+    )
+    advanced_parser.add_argument(
+        "--year",
+        type=int,
+        default=None,
+        help="Single season (default: all PLAYER_YEARS in config.py)",
+    )
+    advanced_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-download the Fryzigg dump even if a cache already exists",
+    )
+
+    subparsers.add_parser("merge", help="Merge player, game, and advanced-stat data")
 
     predict_parser = subparsers.add_parser(
         "predict", help="Train the model and export predictions"
@@ -70,6 +92,11 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Run GridSearchCV before the default training path",
     )
+    all_parser.add_argument(
+        "--force-advanced",
+        action="store_true",
+        help="Re-download the Fryzigg dump during `all`",
+    )
 
     args = parser.parse_args(argv)
 
@@ -77,6 +104,8 @@ def main(argv: list[str] | None = None) -> None:
         scrape_games()
     elif args.command == "scrape-players":
         scrape_players(args.year)
+    elif args.command == "scrape-advanced":
+        scrape_advanced(args.year, force=args.force)
     elif args.command == "merge":
         merge()
     elif args.command == "predict":
@@ -84,5 +113,6 @@ def main(argv: list[str] | None = None) -> None:
     elif args.command == "all":
         scrape_games()
         scrape_players(args.year)
+        scrape_advanced(force=args.force_advanced)
         merge()
         predict(tune=args.tune)

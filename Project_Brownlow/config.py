@@ -31,6 +31,8 @@ GAME_DATA_PATH = DATA_RAW_DIR / "AFL_Game_Data.csv"
 PROCESSED_DATA_PATH = DATA_PROCESSED_DIR / "player_games.csv"
 VOTE_BACKFILL_PATH = DATA_REFERENCE_DIR / "brownlow_votes.csv"
 FEATURE_ENGINEERING_PATH = DATA_PROCESSED_DIR / "player_games_features.csv"
+FRYZIGG_RDS_URL = "http://www.fryziggafl.net/static/fryziggafl.rds"
+FRYZIGG_CACHE_PATH = DATA_RAW_DIR / "_fryzigg_cache.rds"
 
 # Season year -> official Brownlow tally year used when past_votes is missing.
 VOTE_BACKFILL_YEARS = {
@@ -58,6 +60,50 @@ TEAM_CODE_MAP = {
     "West Coast": "WC",
     "Western Bulldogs": "WB",
 }
+
+# Extra names used by Fryzigg and AFL.com.au, folded into TEAM_CODE_MAP codes.
+TEAM_CODE_ALIASES = {
+    "adelaide crows": "AD",
+    "brisbane": "BL",
+    "geelong cats": "GE",
+    "gold coast suns": "GC",
+    "greater western sydney": "GW",
+    "greater western sydney giants": "GW",
+    "gws": "GW",
+    "gws giants": "GW",
+    "kangaroos": "NM",
+    "sydney swans": "SY",
+    "west coast eagles": "WC",
+    "footscray": "WB",
+}
+
+MIDFIELD_POSITIONS = {"C", "R", "RR", "W"}
+
+# AFL Tables nicknames -> Fryzigg / AFL.com.au full names (after punctuation strip).
+PLAYER_NAME_ALIASES = {
+    "ALIX TAURU": "ALIXZANDER TAURU",
+    "ARCHIE MAY": "ARCHER MAY",
+    "HARRY JONES": "HARRISON JONES",
+    "HARRY PETTY": "HARRISON PETTY",
+    "JOSH DRAPER": "JOSHUA DRAPER",
+    "LEO LOMBARD": "LEONARDO LOMBARD",
+    "MATT CARROLL": "MATTHEW CARROLL",
+    "MITCH HINGE": "MITCHELL HINGE",
+    "NICK MADDEN": "NICHOLAS MADDEN",
+}
+
+ADVANCED_STAT_COLS = [
+    "score_involvements",
+    "metres_gained",
+    "intercepts",
+    "pressure_acts",
+    "turnovers",
+    "centre_clearances",
+    "ground_ball_gets",
+    "tackles_inside_fifty",
+    "disposal_efficiency_percentage",
+    "effective_disposals",
+]
 
 # AFL Tables / legacy headers -> snake_case names used after merge.
 COLUMN_RENAME = {
@@ -145,13 +191,20 @@ FEATURE_COLS = [
     "score_involvement",
     "margin_x_past_votes",
     "rebounds_x_one_percenters",
+    "abs_margin",
+    "disposals_x_closeness",
+    "clearances_when_losing",
+    *ADVANCED_STAT_COLS,
+    "is_midfielder",
 ]
-
-EVAL_THRESHOLDS = [0.7, 0.5, 0.3]
 
 
 def player_data_path(year: int) -> Path:
     return DATA_RAW_DIR / f"{year}_AFL_Player_Data.csv"
+
+
+def advanced_data_path(year: int) -> Path:
+    return DATA_RAW_DIR / f"{year}_AFL_Advanced_Stats.csv"
 
 
 def year_output_dir(year: int | None = None) -> Path:

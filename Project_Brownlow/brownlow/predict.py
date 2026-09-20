@@ -1,4 +1,4 @@
-"""Load processed data, run the model, and export vote predictions."""
+"""Load processed data, run the ranker, and export vote predictions."""
 
 from pathlib import Path
 
@@ -10,10 +10,10 @@ from brownlow.columns import standardize_columns
 from brownlow.features import engineer_features, load_vote_backfills
 from brownlow.model import (
     assign_321_votes,
-    evaluate_thresholds,
     evaluate_vote_ranking,
     prepare_model_data,
-    train_xgb_model,
+    train_ranker,
+    walk_forward_evaluate,
 )
 
 
@@ -23,7 +23,7 @@ def load_data(file_path: str | Path) -> pd.DataFrame:
 
 
 def predict_and_export(bst, predict_df, feature_cols, output_dir=None, predict_year: int | None = None):
-    """Predict vote probabilities, assign 3-2-1 votes, and write year-scoped heatmaps."""
+    """Score the target season, assign 3-2-1 votes, and write year-scoped heatmaps."""
     predict_year = predict_year if predict_year is not None else config.PREDICT_YEAR
     output_dir = Path(output_dir) if output_dir is not None else config.year_output_dir(predict_year)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -65,7 +65,7 @@ def predict_and_export(bst, predict_df, feature_cols, output_dir=None, predict_y
 
 
 def run_predict(tune: bool = False) -> None:
-    """End-to-end train and export using config defaults."""
+    """Walk-forward evaluate, train the final ranker, and export predictions."""
     season_dir = config.year_output_dir(config.PREDICT_YEAR)
     season_dir.mkdir(parents=True, exist_ok=True)
 
@@ -73,21 +73,18 @@ def run_predict(tune: bool = False) -> None:
     vote_backfills = load_vote_backfills()
     df = engineer_features(df, vote_backfills, output_path=config.FEATURE_ENGINEERING_PATH)
 
-    X_train, X_val, y_train, y_val, predict_df, val_df = prepare_model_data(
+    walk_forward_evaluate(df, config.FEATURE_COLS)
+
+    train_df, val_df, predict_df = prepare_model_data(
         df, config.FEATURE_COLS, config.PREDICT_YEAR, config.VAL_YEAR
     )
 
     if tune:
-        from brownlow.tune import tune_xgb_classifier
+        from brownlow.tune import tune_xgb_ranker
 
-        model = tune_xgb_classifier(X_train, y_train, X_val, y_val)
-        bst = model.get_booster()
-        probs = model.predict_proba(X_val)[:, 1]
+        bst, val_sorted, scores = tune_xgb_ranker(train_df, val_df, config.FEATURE_COLS)
     else:
-        bst, probs = train_xgb_model(X_train, y_train, X_val, y_val)
+        bst, val_sorted, scores = train_ranker(train_df, val_df, config.FEATURE_COLS)
 
-    for threshold in config.EVAL_THRESHOLDS:
-        evaluate_thresholds(probs, y_val, threshold)
-    evaluate_vote_ranking(val_df, probs)
-
+    evaluate_vote_ranking(val_sorted, scores, label=str(config.VAL_YEAR))
     predict_and_export(bst, predict_df, config.FEATURE_COLS, season_dir, config.PREDICT_YEAR)

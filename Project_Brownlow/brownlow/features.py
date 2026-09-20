@@ -76,6 +76,10 @@ def engineer_features(
     df["score_involvement"] = df["goals"] + df["goal_assists"]
     df["margin_x_past_votes"] = df["margin"] * df["past_votes"]
     df["rebounds_x_one_percenters"] = df["rebounds"] * df["one_percenters"]
+    # Midfielders in tight or losing games — the pattern the binary model missed.
+    df["abs_margin"] = df["margin"].abs()
+    df["disposals_x_closeness"] = df["disposals"] * (1 - df["abs_margin"].clip(upper=1))
+    df["clearances_when_losing"] = df["clearances"] * (df["margin"] < 0).astype(int)
 
     if output_path is not None:
         featured_path = Path(output_path)

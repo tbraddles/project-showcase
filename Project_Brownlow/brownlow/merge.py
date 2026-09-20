@@ -5,6 +5,7 @@ from pathlib import Path
 import pandas as pd
 
 import config
+from brownlow.advanced import attach_advanced_stats, load_advanced_stats
 from brownlow.columns import standardize_columns
 
 
@@ -84,6 +85,8 @@ def merge_afl_data(
     players = normalize_players(pd.concat(player_dfs, ignore_index=True))
     games = normalize_games(pd.read_csv(tables_dir / "AFL_Game_Data.csv"))
     player_games = join_players_to_games(players, games)
+    advanced = load_advanced_stats(tables_dir, years)
+    player_games = attach_advanced_stats(player_games, advanced)
 
     player_games.to_csv(output_path, index=False)
     print(f"Merge complete and saved to {output_path}")

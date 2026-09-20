@@ -34,13 +34,14 @@ Season year, feature columns, and file paths live in `config.py`. Scripts are nu
 ```
 python 01_scrape_games.py
 python 02_scrape_players.py
-python 03_merge.py
-python 04_predict.py
+python 03_scrape_advanced.py
+python 04_merge.py
+python 05_predict.py
 ```
 
-The same steps are available as `python -m brownlow scrape-games` (then `scrape-players`, `merge`, `predict`), or `python -m brownlow all`.
+The same steps are available as `python -m brownlow scrape-games` (then `scrape-players`, `scrape-advanced`, `merge`, `predict`), or `python -m brownlow all`.
 
-`02_scrape_players.py` defaults to `PREDICT_YEAR` in `config.py`. Override with `--year 2024` if needed. Optional hyperparameter search: `python 04_predict.py --tune`.
+`02_scrape_players.py` defaults to `PREDICT_YEAR` in `config.py`. Override with `--year 2024` if needed. `03_scrape_advanced.py` writes yearly Champion-style stats (`metres_gained`, `score_involvements`, `pressure_acts`, ...) under `data/raw/`. Optional ranker search on validation top-3 recall: `python 05_predict.py --tune`.
 
 **5. View Output**
 
@@ -58,22 +59,22 @@ python -m unittest tests.test_pipeline
 
 ## Key Components
 
-- **Data Collection**: A custom Python scraper to gather match-level data and player statistics.
-- **Feature Engineering**: Creation of vote-influencing features such as player impact, disposals, efficiency, and team performance.
-- **Modeling**: Applied tree-based regression models (e.g., Random Forest, XGBoost) to estimate vote likelihood on a per-game basis. Training uses earlier seasons; the latest labeled year is held out for validation.
-- **Evaluation**: Model outputs were validated against historical voting patterns.
-- **Output**: Final predictions for the 2025 Brownlow Medal winner are provided as CSVs (per-game probabilities and 3-2-1 vote heatmaps).
+- **Data Collection**: AFL Tables for box scores, plus Fryzigg / AFL.com.au for Champion-style advanced stats (metres gained, score involvements, intercepts, pressure acts).
+- **Feature Engineering**: Creation of vote-influencing features such as player impact, disposals, efficiency, close-game context, and advanced stats.
+- **Modeling**: XGBoost `rank:ndcg` treats official 0/1/2/3 votes as relevance grades and ranks players inside each match. Training uses earlier seasons; the latest labeled year is held out for early stopping.
+- **Evaluation**: Walk-forward ranking metrics (top-3 recall, exact 3-2-1, best-on-ground, season Spearman) plus 3-2-1 heatmaps.
+- **Output**: Final predictions for the configured Brownlow season are provided as CSVs (per-game probabilities and 3-2-1 vote heatmaps).
 
 ## Project Layout
 
-- `01_scrape_games.py` … `04_predict.py`: Numbered entrypoints, in execution order.
+- `01_scrape_games.py` … `05_predict.py`: Numbered entrypoints, in execution order.
 - `config.py`: Season year, paths, feature list, team codes, and evaluation thresholds.
-- `brownlow/`: Pipeline package (scrape, merge, features, model, predict, tune, CLI). Library modules are not numbered because those names would be invalid Python imports.
-- `data/raw/`: Scraped player and game CSVs from AFL Tables.
+- `brownlow/`: Pipeline package (scrape, advanced, merge, features, model, predict, tune, CLI). Library modules are not numbered because those names would be invalid Python imports.
+- `data/raw/`: Scraped player, game, and advanced-stat CSVs.
 - `data/reference/brownlow_votes.csv`: Official 2017 and 2023 season tallies used when prior-year votes are missing.
 - `data/processed/player_games.csv`: Merged player-game dataset used for training.
 - `output/{year}/`: Season-specific prediction CSVs and heatmaps.
-- `tests/`: Merge, feature, and 3-2-1 vote checks.
+- `tests/`: Merge, feature, advanced-stat join, and 3-2-1 vote checks.
 
 ## Skills Demonstrated
 

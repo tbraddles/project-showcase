@@ -4,9 +4,10 @@ import unittest
 
 import pandas as pd
 
+from brownlow.advanced import attach_advanced_stats, normalize_person_name, parse_advanced_round, team_code_from_name
 from brownlow.features import engineer_features
 from brownlow.merge import join_players_to_games, normalize_games, normalize_players
-from brownlow.model import assign_321_votes, evaluate_vote_ranking
+from brownlow.model import assign_321_votes, evaluate_vote_ranking, labeled_years, to_rank_dmatrix
 
 
 def _players_frame() -> pd.DataFrame:
@@ -108,6 +109,86 @@ class FeatureTests(unittest.TestCase):
         self.assertEqual(home["past_votes"], 12)
         self.assertEqual(home["disposals"], 30)
         self.assertIn("goals_x_clearances", featured.columns)
+        self.assertIn("disposals_x_closeness", featured.columns)
+        self.assertIn("clearances_when_losing", featured.columns)
+        self.assertAlmostEqual(float(home["abs_margin"]), abs(float(home["margin"])))
+
+
+class AdvancedJoinTests(unittest.TestCase):
+    def test_name_and_team_normalization(self):
+        self.assertEqual(normalize_person_name("Connor O'Sullivan"), "CONNOR OSULLIVAN")
+        self.assertEqual(team_code_from_name("Greater Western Sydney"), "GW")
+        self.assertEqual(team_code_from_name("Sydney Swans"), "SY")
+        self.assertEqual(parse_advanced_round("Opening Round"), 0)
+        self.assertEqual(parse_advanced_round("14"), 14)
+        self.assertIsNone(parse_advanced_round("Grand Final"))
+
+    def test_joins_on_date_when_round_labels_differ(self):
+        players = normalize_players(_players_frame())
+        games = normalize_games(_games_frame())
+        merged = join_players_to_games(players, games)
+        advanced = pd.DataFrame(
+            {
+                "year": [2024, 2024],
+                "round": [0, 0],
+                "date": ["2024-03-21", "2024-03-21"],
+                "player_first_name": ["Home", "Away"],
+                "player_last_name": ["Player", "Player"],
+                "player_team": ["Richmond", "Carlton"],
+                "player_position": ["C", "CHB"],
+                "score_involvements": [8, 2],
+                "metres_gained": [500, 120],
+                "intercepts": [3, 6],
+                "pressure_acts": [20, 10],
+                "turnovers": [4, 2],
+                "centre_clearances": [5, 0],
+                "ground_ball_gets": [9, 3],
+                "tackles_inside_fifty": [1, 0],
+                "disposal_efficiency_percentage": [75.0, 60.0],
+                "effective_disposals": [22, 8],
+            }
+        )
+        joined = attach_advanced_stats(merged, advanced)
+        home = joined.loc[joined["player"] == "HOME PLAYER"].iloc[0]
+        self.assertEqual(home["metres_gained"], 500)
+        self.assertEqual(home["score_involvements"], 8)
+        self.assertEqual(home["is_midfielder"], 1.0)
+        away = joined.loc[joined["player"] == "AWAY PLAYER"].iloc[0]
+        self.assertEqual(away["metres_gained"], 120)
+        self.assertEqual(away["is_midfielder"], 0.0)
+
+    def test_last_name_fallback_and_apostrophes(self):
+        players = pd.DataFrame(
+            {
+                "player": ["MITCH HINGE", "CONNOR OSULLIVAN"],
+                "team": ["AD", "GE"],
+                "date": ["2025-04-01", "2025-04-01"],
+                "metres_gained": [pd.NA, pd.NA],
+            }
+        )
+        advanced = pd.DataFrame(
+            {
+                "player_first_name": ["Mitchell", "Connor"],
+                "player_last_name": ["Hinge", "O'Sullivan"],
+                "player_team": ["Adelaide", "Geelong"],
+                "date": ["2025-04-01", "2025-04-01"],
+                "player_position": ["C", "C"],
+                "score_involvements": [6, 4],
+                "metres_gained": [400, 350],
+                "intercepts": [1, 2],
+                "pressure_acts": [15, 18],
+                "turnovers": [3, 3],
+                "centre_clearances": [2, 4],
+                "ground_ball_gets": [7, 8],
+                "tackles_inside_fifty": [0, 1],
+                "disposal_efficiency_percentage": [70.0, 72.0],
+                "effective_disposals": [18, 20],
+            }
+        )
+        joined = attach_advanced_stats(players, advanced)
+        by_player = joined.set_index("player")
+        self.assertEqual(by_player.loc["MITCH HINGE", "metres_gained"], 400)
+        self.assertEqual(by_player.loc["CONNOR OSULLIVAN", "metres_gained"], 350)
 
 
 class VoteAssignmentTests(unittest.TestCase):
@@ -143,6 +224,30 @@ class VoteAssignmentTests(unittest.TestCase):
         self.assertEqual(metrics["top3_recall"], 1.0)
         self.assertEqual(metrics["exact_on_voters"], 1.0)
         self.assertEqual(metrics["bog_accuracy"], 1.0)
+
+    def test_rank_dmatrix_groups_by_game(self):
+        frame = pd.DataFrame(
+            {
+                "game_id": [10, 10, 11, 11, 11],
+                "player_id": [1, 2, 3, 4, 5],
+                "brownlow": [3, 0, 2, 1, 0],
+                "kicks": [20, 5, 15, 10, 4],
+            }
+        )
+        dmat, sorted_frame = to_rank_dmatrix(frame, ["kicks"])
+        self.assertEqual(len(sorted_frame), 5)
+        self.assertEqual(dmat.num_row(), 5)
+        groups = sorted_frame.groupby("game_id", sort=False).size().tolist()
+        self.assertEqual(groups, [2, 3])
+
+    def test_labeled_years_skips_empty_seasons(self):
+        frame = pd.DataFrame(
+            {
+                "year": [2024, 2024, 2025, 2025, 2026],
+                "brownlow": [3, 0, 0, 0, 0],
+            }
+        )
+        self.assertEqual(labeled_years(frame, before_year=2026), [2024])
 
 
 if __name__ == "__main__":
