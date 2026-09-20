@@ -8,19 +8,18 @@ import xgboost as xgb
 import config
 from brownlow.columns import standardize_columns
 from brownlow.features import engineer_features, load_vote_backfills
-from brownlow.model import evaluate_thresholds, prepare_model_data, train_xgb_model
+from brownlow.model import (
+    assign_321_votes,
+    evaluate_thresholds,
+    evaluate_vote_ranking,
+    prepare_model_data,
+    train_xgb_model,
+)
 
 
 def load_data(file_path: str | Path) -> pd.DataFrame:
     """Load AFL player-game data and normalize any legacy column names."""
     return standardize_columns(pd.read_csv(file_path))
-
-
-def assign_321_votes(predict_df: pd.DataFrame) -> pd.DataFrame:
-    """Award 3-2-1 votes to the top three predicted players in each game."""
-    ranked = predict_df.sort_values(["game_id", "vote_probability"], ascending=[True, False])
-    ranked["votes"] = ranked.groupby("game_id").cumcount().map({0: 3, 1: 2, 2: 1}).fillna(0)
-    return ranked
 
 
 def predict_and_export(bst, predict_df, feature_cols, output_dir=None, predict_year: int | None = None):
@@ -74,7 +73,7 @@ def run_predict(tune: bool = False) -> None:
     vote_backfills = load_vote_backfills()
     df = engineer_features(df, vote_backfills, output_path=config.FEATURE_ENGINEERING_PATH)
 
-    X_train, X_val, y_train, y_val, predict_df = prepare_model_data(
+    X_train, X_val, y_train, y_val, predict_df, val_df = prepare_model_data(
         df, config.FEATURE_COLS, config.PREDICT_YEAR, config.VAL_YEAR
     )
 
@@ -89,5 +88,6 @@ def run_predict(tune: bool = False) -> None:
 
     for threshold in config.EVAL_THRESHOLDS:
         evaluate_thresholds(probs, y_val, threshold)
+    evaluate_vote_ranking(val_df, probs)
 
     predict_and_export(bst, predict_df, config.FEATURE_COLS, season_dir, config.PREDICT_YEAR)

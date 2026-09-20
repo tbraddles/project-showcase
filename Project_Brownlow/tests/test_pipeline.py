@@ -6,7 +6,7 @@ import pandas as pd
 
 from brownlow.features import engineer_features
 from brownlow.merge import join_players_to_games, normalize_games, normalize_players
-from brownlow.predict import assign_321_votes
+from brownlow.model import assign_321_votes, evaluate_vote_ranking
 
 
 def _players_frame() -> pd.DataFrame:
@@ -127,6 +127,22 @@ class VoteAssignmentTests(unittest.TestCase):
         self.assertEqual(by_player["D"], 0)
         self.assertEqual(by_player["F"], 3)
         self.assertEqual(by_player["E"], 2)
+
+    def test_ranking_metrics_on_a_labeled_game(self):
+        val = pd.DataFrame(
+            {
+                "game_id": [1, 1, 1, 1],
+                "player": ["A", "B", "C", "D"],
+                "team": ["X", "X", "Y", "Y"],
+                "brownlow": [3, 2, 1, 0],
+            }
+        )
+        # Same ranking as actual 3-2-1.
+        metrics = evaluate_vote_ranking(val, [0.9, 0.8, 0.7, 0.1])
+        self.assertEqual(metrics["games"], 1)
+        self.assertEqual(metrics["top3_recall"], 1.0)
+        self.assertEqual(metrics["exact_on_voters"], 1.0)
+        self.assertEqual(metrics["bog_accuracy"], 1.0)
 
 
 if __name__ == "__main__":
