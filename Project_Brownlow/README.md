@@ -27,54 +27,53 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-**4. Run the Pipeline Scripts in Order**
+**4. Run the Pipeline**
 
-4-1. Scrape game-level data:
-```
-python game_data_scraper.py
-```
+Season year, feature columns, and file paths live in `config.py`. Scripts are numbered in run order:
 
-4-2. Scrape player-level data (set to scrape 2025 data):
 ```
-python player_data_scraper.py
-```
-
-4-3. Merge and clean the AFL data:
-```
-python merge_afl_data.py
+python 01_scrape_games.py
+python 02_scrape_players.py
+python 03_merge.py
+python 04_predict.py
 ```
 
-4-4. Generate Brownlow predictions:
-```
-python brownlow_predictor.py
-```
+The same steps are available as `python -m brownlow scrape-games` (then `scrape-players`, `merge`, `predict`), or `python -m brownlow all`.
+
+`02_scrape_players.py` defaults to `PREDICT_YEAR` in `config.py`. Override with `--year 2024` if needed. Optional hyperparameter search: `python 04_predict.py --tune`.
 
 **5. View Output**
 
-- Navigate to the `output` folder to see the generated prediction files.
+Predictions land in a season folder, for example `output/2025/`:
+
+- `brownlow_2025_player_game_probabilities.csv`
+- `brownlow_2025_heatmap_probability.csv`
+- `brownlow_2025_heatmap_votes.csv`
+
+**6. Tests**
+
+```
+python -m unittest tests.test_pipeline
+```
 
 ## Key Components
 
 - **Data Collection**: A custom Python scraper to gather match-level data and player statistics.
 - **Feature Engineering**: Creation of vote-influencing features such as player impact, disposals, efficiency, and team performance.
-- **Modeling**: Applied tree-based regression models (e.g., Random Forest, XGBoost) to estimate vote likelihood on a per-game basis.
+- **Modeling**: Applied tree-based regression models (e.g., Random Forest, XGBoost) to estimate vote likelihood on a per-game basis. Training uses earlier seasons; the latest labeled year is held out for validation.
 - **Evaluation**: Model outputs were validated against historical voting patterns.
-- **Output**: Final predictions for the 2025 Brownlow Medal winner are provided in Excel format.
+- **Output**: Final predictions for the 2025 Brownlow Medal winner are provided as CSVs (per-game probabilities and 3-2-1 vote heatmaps).
 
-## Files Included
+## Project Layout
 
-- `player_data_scraper.py`: Downloads and cleans per-player stats from AFL Tables across a given season.
-- `game_data_scraper.py`: Collects and standardises game-level scores and metadata.
-- `merge_afl_data.py`: Merges player and game data into a unified dataset with contextual features.
-- `brownlow_predictor.py`: Builds and evaluates the Brownlow prediction model; generates per-match and overall vote predictions.
-- `xgb_tuning_utils.py`: Contains hyperparameter tuning logic using GridSearchCV for optimizing XGBoost performance.
-- `Master_AFL_Data.csv`: Cleaned and combined dataset used for model training and analysis.
-- `Current_Predictions.xlsx`: Formatted output of current Brownlow predictions based on most recent data.
-
-## Directories
-
-- `afl_tables/`: Raw scraped CSVs for player and match data (organized by year).
-- `output/`: Generated prediction outputs, including season vote tallies, match-by-match vote heatmaps, and Excel exports.
+- `01_scrape_games.py` … `04_predict.py`: Numbered entrypoints, in execution order.
+- `config.py`: Season year, paths, feature list, team codes, and evaluation thresholds.
+- `brownlow/`: Pipeline package (scrape, merge, features, model, predict, tune, CLI). Library modules are not numbered because those names would be invalid Python imports.
+- `data/raw/`: Scraped player and game CSVs from AFL Tables.
+- `data/reference/brownlow_votes.csv`: Official 2017 and 2023 season tallies used when prior-year votes are missing.
+- `data/processed/player_games.csv`: Merged player-game dataset used for training.
+- `output/{year}/`: Season-specific prediction CSVs and heatmaps.
+- `tests/`: Merge, feature, and 3-2-1 vote checks.
 
 ## Skills Demonstrated
 
@@ -85,7 +84,7 @@ python brownlow_predictor.py
 
 ## Status
 
-✅ Completed. Minor enhancements and testing ongoing.
+Completed. Minor enhancements and testing ongoing.
 
 ---
 
