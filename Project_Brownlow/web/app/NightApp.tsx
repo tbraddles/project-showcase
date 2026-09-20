@@ -252,10 +252,12 @@ export default function NightApp() {
                         <span>{row.player}</span>
                       </div>
                     </td>
-                    <td className="ticks">
-                      <span>{row.threes}×3</span>
-                      <span>{row.twos}×2</span>
-                      <span>{row.ones}×1</span>
+                    <td>
+                      <div className="ticks">
+                        <span>{row.threes}×3</span>
+                        <span>{row.twos}×2</span>
+                        <span>{row.ones}×1</span>
+                      </div>
                     </td>
                     <td className="votes">{row.votes}</td>
                   </tr>

@@ -178,7 +178,8 @@ h2 {
 .board td {
   padding: 0.72rem 0.7rem;
   text-align: left;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .board th {
@@ -191,10 +192,14 @@ h2 {
   text-transform: uppercase;
 }
 
+.board th:last-child,
+.board .votes {
+  text-align: right;
+}
+
 .board .votes {
   font-family: "Bebas Neue", Impact, sans-serif;
   font-size: 1.5rem;
-  text-align: right;
   color: var(--gold);
 }
 
@@ -207,6 +212,7 @@ h2 {
 
 .ticks {
   display: flex;
+  align-items: center;
   gap: 0.4rem;
   white-space: nowrap;
 }
