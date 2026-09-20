@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 data/raw/_fryzigg_cache.rds
+web/node_modules/
+web/.next/
+web/out/

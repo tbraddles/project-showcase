@@ -45,13 +45,25 @@ The same steps are available as `python -m brownlow scrape-games` (then `scrape-
 
 **5. View Output**
 
-Predictions land in a season folder, for example `output/2025/`:
+Predictions land in a season folder, for example `output/2026/`:
 
-- `brownlow_2025_player_game_probabilities.csv`
-- `brownlow_2025_heatmap_probability.csv`
-- `brownlow_2025_heatmap_votes.csv`
+- `brownlow_2026_player_game_probabilities.csv`
+- `brownlow_2026_heatmap_probability.csv`
+- `brownlow_2026_heatmap_votes.csv`
 
-**6. Tests**
+**6. Sizzle Card (phone board)**
+
+A Vercel app in `web/` turns those CSVs into a Brownlow-night desk: season table, swipeable 3-2-1 slips, and most-votes-per-club markets.
+
+```
+cd web
+npm install
+npm run dev
+```
+
+Deploy with Vercel Root Directory set to `web`. Rebuild `web/data/night.json` after a new predict run: `python web/build_data.py`.
+
+**7. Tests**
 
 ```
 python -m unittest tests.test_pipeline
