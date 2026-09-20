@@ -15,10 +15,10 @@ DATA_REFERENCE_DIR = PROJECT_ROOT / "data" / "reference"
 DATA_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 
-PREDICT_YEAR = 2025
+PREDICT_YEAR = 2026
 
 # 2023 player stats are incomplete, so that season is excluded from the merge.
-PLAYER_YEARS = [2018, 2019, 2020, 2021, 2022, 2024, 2025]
+PLAYER_YEARS = [2018, 2019, 2020, 2021, 2022, 2024, 2025, 2026]
 
 # Last labeled season held out for early stopping and evaluation.
 _PRIOR_YEARS = [year for year in PLAYER_YEARS if year < PREDICT_YEAR]
@@ -37,8 +37,6 @@ VOTE_BACKFILL_YEARS = {
     2024: 2023,
     2018: 2017,
 }
-
-FINAL_ROUNDS = ["QF", "EF", "SF", "PF", "GF"]
 
 TEAM_CODE_MAP = {
     "Adelaide": "AD",

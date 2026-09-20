@@ -67,6 +67,14 @@ def _games_frame() -> pd.DataFrame:
 
 
 class MergeTests(unittest.TestCase):
+    def test_drops_letter_finals_rounds(self):
+        extra = _players_frame()
+        extra["Round"] = extra["Round"].astype(str)
+        extra.loc[0, "Round"] = "WF"
+        extra.loc[1, "Round"] = "QF"
+        players = normalize_players(extra)
+        self.assertEqual(len(players), 0)
+
     def test_home_and_away_players_get_the_same_game(self):
         players = normalize_players(_players_frame())
         games = normalize_games(_games_frame())

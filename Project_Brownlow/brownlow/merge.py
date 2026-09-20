@@ -9,9 +9,11 @@ from brownlow.columns import standardize_columns
 
 
 def normalize_players(data_players: pd.DataFrame) -> pd.DataFrame:
-    """Drop finals, coerce types, and standardize player/team text."""
+    """Keep home-and-away rounds only, coerce types, and standardize text."""
     players = standardize_columns(data_players.copy())
-    players = players[~players["round"].isin(config.FINAL_ROUNDS)].copy()
+    # Finals use letter codes (QF, EF, SF, PF, GF, WF, ...). Keep numbered rounds.
+    home_and_away = players["round"].astype(str).str.fullmatch(r"\d+")
+    players = players[home_and_away].copy()
     players["round"] = players["round"].astype(int)
 
     for col in ["team", "opponent", "player"]:
