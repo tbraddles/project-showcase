@@ -1,0 +1,15 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.playwright/
+
+data/raw/
+data/processed/
+Database/
+output/
+*.db
+*.db-wal
+*.db-shm
+.env
