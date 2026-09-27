@@ -106,10 +106,25 @@ def init_db(db_path: Path | None = None) -> sqlite3.Connection:
             back_overround REAL,
             lay_overround REAL,
             source_file TEXT,
+            place_result TEXT,
+            place_bsp REAL,
+            place_market_id TEXT,
+            place_bsp_volume REAL,
+            place_preplay_volume REAL,
             UNIQUE(win_market_id, selection_id)
         )
         """
     )
+    existing = {row[1] for row in con.execute("PRAGMA table_info(betfair_runners)")}
+    for name, typ in (
+        ("place_result", "TEXT"),
+        ("place_bsp", "REAL"),
+        ("place_market_id", "TEXT"),
+        ("place_bsp_volume", "REAL"),
+        ("place_preplay_volume", "REAL"),
+    ):
+        if name not in existing:
+            con.execute(f"ALTER TABLE betfair_runners ADD COLUMN {name} {typ}")
 
     cur.execute(
         """

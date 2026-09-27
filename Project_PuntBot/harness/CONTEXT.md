@@ -21,7 +21,8 @@ A positive paper ROI is a lead, not a licence to bet.
 - Use `Project_PuntBot/venv` for Python (system Python breaks pandas).
 - Scrape via `natsite.harness.org.au`. `www.harness.org.au` is Cloudflare 403.
 - Melton code is `MX` (not ME). Menangle is `PC` (not MB).
-- Run commands from `Project_PuntBot` so `config.py` paths resolve.
+- Run harness commands from `Project_PuntBot/harness` so `config.py` paths resolve.
+- Shared venv: `Project_PuntBot/venv`. Greyhound lives in `../greyhound`.
 
 ## Locked product decision
 
@@ -91,7 +92,8 @@ still loses. Do not promote other 2025-positive rows.
 
 `model_p` is a worse probability than BSP in the $2.50–$8 band.
 `frozen_candidate` is calibrated to the market and loses after commission.
-Do not hunt a replacement rule.
+Do not hunt a replacement rule. Greyhound is a new sport in `../greyhound`
+(prices first). Do not copy these filters onto dogs.
 
 ## File map
 

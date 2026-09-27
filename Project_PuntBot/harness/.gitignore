@@ -5,10 +5,10 @@ __pycache__/
 .pytest_cache/
 .playwright/
 
-**/data/raw/
-**/data/processed/
-**/Database/
-**/output/
+data/raw/
+data/processed/
+Database/
+output/
 *.db
 *.db-wal
 *.db-shm

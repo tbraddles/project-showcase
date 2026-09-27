@@ -1,8 +1,12 @@
-"""Paths and research defaults for the PuntBot pipeline."""
+"""Paths and research defaults for the harness pipeline."""
 
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+REPO_ROOT = ROOT.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 
 DATA_DIR = ROOT / "data"
 DATA_RAW_DIR = DATA_DIR / "raw"
@@ -24,6 +28,8 @@ BACKTEST_REPORT_PATH = OUTPUT_DIR / "backtest_report.txt"
 EQUITY_CURVE_PATH = OUTPUT_DIR / "equity_curve.csv"
 EXPERIMENTS_REPORT_PATH = OUTPUT_DIR / "experiments_report.txt"
 CALIBRATION_REPORT_PATH = OUTPUT_DIR / "calibration_report.txt"
+PLACE_REPORT_PATH = OUTPUT_DIR / "place_vs_win_report.txt"
+FLOW_REPORT_PATH = OUTPUT_DIR / "flow_vs_bsp_report.txt"
 
 BETFAIR_ASSETS_BASE = "https://betfair-datascientists.github.io/data/assets"
 BETFAIR_YEARS = (2020, 2021, 2022, 2023, 2024, 2025)
