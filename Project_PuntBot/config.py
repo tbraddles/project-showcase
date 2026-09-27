@@ -14,6 +14,7 @@ DATABASE_DIR = ROOT / "Database"
 
 DB_PATH = DATABASE_DIR / "race_results.db"
 TRACK_CODES_PATH = DATA_REFERENCE_DIR / "track_codes.csv"
+TRACK_ATTRIBUTES_PATH = DATA_REFERENCE_DIR / "track_attributes.csv"
 
 FEATURES_PATH = DATA_PROCESSED_DIR / "features.csv"
 PREDICTIONS_PATH = DATA_PROCESSED_DIR / "predictions.csv"
@@ -21,6 +22,8 @@ JOIN_REPORT_PATH = OUTPUT_DIR / "join_report.txt"
 BASELINE_REPORT_PATH = OUTPUT_DIR / "bsp_baseline.txt"
 BACKTEST_REPORT_PATH = OUTPUT_DIR / "backtest_report.txt"
 EQUITY_CURVE_PATH = OUTPUT_DIR / "equity_curve.csv"
+EXPERIMENTS_REPORT_PATH = OUTPUT_DIR / "experiments_report.txt"
+CALIBRATION_REPORT_PATH = OUTPUT_DIR / "calibration_report.txt"
 
 BETFAIR_ASSETS_BASE = "https://betfair-datascientists.github.io/data/assets"
 BETFAIR_YEARS = (2020, 2021, 2022, 2023, 2024, 2025)
@@ -66,4 +69,5 @@ FLAT_STAKE = 1.0
 KELLY_FRACTION = 0.25
 
 WALK_FORWARD_MIN_TRAIN_MONTHS = 3
+HOLDOUT_YEAR = 2025
 RANDOM_SEED = 42

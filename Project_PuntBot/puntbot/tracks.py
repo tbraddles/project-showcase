@@ -67,3 +67,40 @@ def canonical_venue(track: str | None) -> str | None:
 
 def display_venue(track: str | None) -> str:
     return canonical_venue(track) or (track or "").strip()
+
+
+@lru_cache(maxsize=1)
+def load_track_attributes(path: Path | None = None) -> dict[str, dict[str, int]]:
+    csv_path = path or config.TRACK_ATTRIBUTES_PATH
+    if not csv_path.exists():
+        return {}
+    with csv_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+    return {
+        row["code"].upper(): {
+            "sprint_lane": int(row.get("sprint_lane") or 0),
+            "metro": int(row.get("metro") or 0),
+        }
+        for row in rows
+        if row.get("code")
+    }
+
+
+def track_sprint_lane(track: str | None) -> float:
+    code = canonical_code(track)
+    if not code:
+        return float("nan")
+    attrs = load_track_attributes().get(code) or load_track_attributes().get(str(track).upper())
+    if not attrs:
+        return float("nan")
+    return float(attrs["sprint_lane"])
+
+
+def track_is_metro(track: str | None) -> float:
+    code = canonical_code(track)
+    if not code:
+        return float("nan")
+    attrs = load_track_attributes().get(code) or load_track_attributes().get(str(track).upper())
+    if not attrs:
+        return float("nan")
+    return float(attrs["metro"])

@@ -98,12 +98,24 @@ def load_hub_frame(path: Path) -> pd.DataFrame:
     return _read_csv_bytes(path.read_bytes(), path.name)
 
 
+def parse_meeting_date(series: pd.Series) -> pd.Series:
+    """Hub files mix ISO dates (2025-08-01) with day-first slashes (1/07/2025)."""
+    text = series.astype(str).str.strip()
+    parsed = pd.Series(pd.NaT, index=series.index, dtype="datetime64[ns]")
+    slash = text.str.contains("/", na=False)
+    if slash.any():
+        parsed.loc[slash] = pd.to_datetime(text.loc[slash], dayfirst=True, errors="coerce")
+    if (~slash).any():
+        parsed.loc[~slash] = pd.to_datetime(text.loc[~slash], errors="coerce")
+    return parsed
+
+
 def normalize_hub_frame(frame: pd.DataFrame, source_file: str) -> pd.DataFrame:
     renamed = frame.rename(columns={src: dest for src, dest in COLUMN_MAP.items() if src in frame.columns})
     keep = [col for col in COLUMN_MAP.values() if col in renamed.columns]
     out = renamed[keep].copy()
     out["source_file"] = source_file
-    out["meeting_date"] = pd.to_datetime(out["meeting_date"], errors="coerce").dt.strftime("%Y-%m-%d")
+    out["meeting_date"] = parse_meeting_date(out["meeting_date"]).dt.strftime("%Y-%m-%d")
     out["win_market_id"] = out["win_market_id"].astype(str).str.replace(r"\.0$", "", regex=True)
     out["selection_id"] = out["selection_id"].astype(str).str.replace(r"\.0$", "", regex=True)
     if "state_code" in out.columns:

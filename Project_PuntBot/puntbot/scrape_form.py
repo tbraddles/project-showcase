@@ -376,23 +376,60 @@ def scrape_race_data_from_html(page, main_url: str) -> tuple[list[dict], list[di
     return parse_meeting_html(page.content(), main_url)
 
 
+def _write_scrape_progress(done: int, total: int, last: str, stored_horses: int, failed: int) -> None:
+    config.OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    (config.OUTPUT_DIR / "scrape_progress.txt").write_text(
+        (
+            f"done={done}\n"
+            f"total={total}\n"
+            f"last={last}\n"
+            f"stored_horses={stored_horses}\n"
+            f"failed={failed}\n"
+        ),
+        encoding="utf-8",
+    )
+
+
+def _store_meeting(con, horses, times) -> tuple[int, int]:
+    if not horses and not times:
+        return 0, 0
+    ingest_form_rows(con, horses or [], times or [])
+    return len(horses or []), len(times or [])
+
+
 def scrape_jobs(
     jobs: list[tuple[str, str, str]],
     headless: bool = True,
     delay: float = 0.4,
     use_browser: bool = False,
 ) -> tuple[list[dict], list[dict]]:
+    """Scrape meetings and persist each one immediately so a crash is resumable."""
     master_horses: list[dict] = []
     master_times: list[dict] = []
+    stored_horses = 0
+    failed = 0
+    total = len(jobs)
+    con = init_db()
+
+    def handle(url: str, iso: str, track: str, horses, times, index: int) -> None:
+        nonlocal stored_horses, failed
+        if horses:
+            master_horses.extend(horses)
+        if times:
+            master_times.extend(times)
+        added, _ = _store_meeting(con, horses, times)
+        stored_horses += added
+        if not horses:
+            failed += 1
+        if index % 5 == 0 or index == total:
+            _write_scrape_progress(index, total, f"{iso} {track}", stored_horses, failed)
 
     if not use_browser:
-        for url, _iso, _track in jobs:
+        for index, (url, iso, track) in enumerate(jobs, 1):
             horses, times = scrape_race_data_from_url(url)
-            if horses:
-                master_horses.extend(horses)
-            if times:
-                master_times.extend(times)
+            handle(url, iso, track, horses, times, index)
             time.sleep(delay)
+        con.close()
         return master_horses, master_times
 
     from playwright.sync_api import sync_playwright
@@ -400,14 +437,12 @@ def scrape_jobs(
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=headless)
         page = browser.new_page()
-        for url, _iso, _track in jobs:
+        for index, (url, iso, track) in enumerate(jobs, 1):
             horses, times = scrape_race_data_from_html(page, url)
-            if horses:
-                master_horses.extend(horses)
-            if times:
-                master_times.extend(times)
+            handle(url, iso, track, horses, times, index)
             time.sleep(delay)
         browser.close()
+    con.close()
     return master_horses, master_times
 
 
@@ -444,9 +479,6 @@ def run_scrape(
 
     print(f"Scraping {len(jobs)} meeting URLs ({start} to {end})")
     horses, times = scrape_jobs(jobs, headless=headless, delay=delay, use_browser=use_browser)
-    con = init_db()
-    ingest_form_rows(con, horses, times)
-    con.close()
     print(f"Stored {len(horses)} horse rows and {len(times)} race rows in {config.DB_PATH}")
 
 

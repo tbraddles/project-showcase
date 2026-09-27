@@ -61,7 +61,7 @@ Writes `runner_matches` and `output/join_report.txt`. Unmatched runners are repo
 python 04_train.py
 ```
 
-Builds pre-race form features (no BSP / last-traded price) and trains a walk-forward `HistGradientBoostingClassifier`. Probabilities are renormalised so they sum to 1 inside each race. Output: `data/processed/predictions.csv`.
+Builds pre-race form features (no BSP / last-traded price) and trains a walk-forward `HistGradientBoostingClassifier`. Features follow the form factors in `Considerations.md`: barriers and row, a simple speed map (likely leader / breeze / sit), class and distance change, trainer/driver changes, sprint lanes, prior sectionals, and stewards excuses. Probabilities are renormalised so they sum to 1 inside each race. Output: `data/processed/predictions.csv`.
 
 **5. Backtest**
 
@@ -71,11 +71,20 @@ python 05_backtest.py
 
 Simulates BSP backs with 6% commission, a 10% edge filter, BSP between 1.50 and 20, and a minimum preplay volume. Reports flat-stake and fractional-Kelly results against an always-back-the-favorite baseline in `output/backtest_report.txt`.
 
+**6. Selective-betting experiments**
+
+```
+python 06_experiments.py
+```
+
+Runs the Solonsch half-mile cull, short-odds-only, overlay, and lay-the-slow-horses tests on the same out-of-sample predictions. Writes `output/experiments_report.txt`.
+
 ## Layout
 
 - `puntbot/` — ingest, scrape, join, features, model, backtest
 - `01_ingest_betfair.py` … `05_backtest.py` — thin CLI wrappers
 - `data/reference/track_codes.csv` — meeting code to Betfair venue names
+- `data/reference/track_attributes.csv` — sprint lane and metro flags
 - `Database/race_results.db` — local SQLite (gitignored)
 - `data/raw/betfair/` — downloaded Hub files (gitignored)
 - `output/` — reports (gitignored)
@@ -91,7 +100,7 @@ After ingesting Hub files for 2020–2026 and scraping H2 2024 form for Albion P
 - Betfair AU win rows: 551,104. Mean BSP overround ≈ 1.00. Favorite strike rate 42.9%.
 - Form-to-market join: 21,852 / 21,955 runners (99.5%), mostly via date + venue + TAB number.
 - Walk-forward model on Oct–Dec 2024: 9,077 out-of-sample runners, 976 markets.
-- BSP backtest (6% commission, 10% edge, BSP 1.50–20, min volume 200): model flat-stake ROI **−14.4%** vs always-back-the-favorite **−6.6%**.
+- BSP backtest (6% commission, 10% edge, BSP 1.50–20, min volume 200): model flat-stake ROI **−24.6%** vs always-back-the-favorite **−6.6%**.
 
 That is the point of the pipeline. The market looks efficient in this sample. Do not add live betting on the back of a losing paper result.
 

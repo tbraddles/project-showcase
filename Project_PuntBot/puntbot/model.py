@@ -80,17 +80,52 @@ def walk_forward_predict(features: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(predictions, ignore_index=True)
 
 
-def run_train(rebuild_features: bool = True) -> pd.DataFrame:
+def holdout_year_predict(features: pd.DataFrame, holdout_year: int) -> pd.DataFrame:
+    """Train on all rows before holdout_year; score that calendar year once."""
+    frame = features.copy()
+    frame = frame.dropna(subset=["win_market_id", "win_bsp"])
+    dates = pd.to_datetime(frame["meeting_date"])
+    years = dates.dt.year
+    train = frame[years < holdout_year]
+    test = frame[years == holdout_year].copy()
+
+    if test.empty:
+        print(
+            f"No joined rows for holdout year {holdout_year}. "
+            "Form for that year may still be scraping — re-run train when ready."
+        )
+        return pd.DataFrame(columns=list(frame.columns) + ["raw_p", "model_p", "split"])
+
+    if train.empty:
+        print(
+            f"No training rows before holdout year {holdout_year}. "
+            "Scrape and join earlier years first."
+        )
+        return pd.DataFrame(columns=list(frame.columns) + ["raw_p", "model_p", "split"])
+
+    test["raw_p"] = _fit_predict(train, test)
+    test["model_p"] = normalize_race_probs(test)
+    test["split"] = f"holdout_{holdout_year}"
+    return test
+
+
+def run_train(rebuild_features: bool = True, holdout_year: int | None = None) -> pd.DataFrame:
     features = write_features() if rebuild_features else pd.read_csv(config.FEATURES_PATH)
     if features.empty:
         raise SystemExit("No feature rows. Run the form scrape and join first.")
-    predicted = walk_forward_predict(features)
+    if holdout_year is not None:
+        predicted = holdout_year_predict(features, holdout_year)
+    else:
+        predicted = walk_forward_predict(features)
     config.DATA_PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     predicted.to_csv(config.PREDICTIONS_PATH, index=False)
-    print(
-        f"Wrote {len(predicted):,} out-of-sample predictions "
-        f"({predicted['win_market_id'].nunique():,} markets) to {config.PREDICTIONS_PATH}"
-    )
+    if predicted.empty:
+        print(f"Wrote empty predictions to {config.PREDICTIONS_PATH}")
+    else:
+        print(
+            f"Wrote {len(predicted):,} out-of-sample predictions "
+            f"({predicted['win_market_id'].nunique():,} markets) to {config.PREDICTIONS_PATH}"
+        )
     return predicted
 
 
@@ -101,5 +136,17 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="Reuse data/processed/features.csv instead of rebuilding",
     )
+    parser.add_argument(
+        "--holdout-year",
+        type=int,
+        nargs="?",
+        const=config.HOLDOUT_YEAR,
+        default=None,
+        metavar="YEAR",
+        help=(
+            f"Score one calendar year out-of-sample (default {config.HOLDOUT_YEAR} when "
+            "flag is given without a year). Training uses only earlier years."
+        ),
+    )
     args = parser.parse_args(argv)
-    run_train(rebuild_features=not args.no_rebuild)
+    run_train(rebuild_features=not args.no_rebuild, holdout_year=args.holdout_year)
